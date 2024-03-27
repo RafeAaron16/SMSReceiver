@@ -3518,6 +3518,7 @@ id textSpacerNoButtons
 id textSpacerNoTitle
 id textStart
 id textTop
+id textView
 id text_input_end_icon
 id text_input_error_icon
 id text_input_start_icon
@@ -3548,7 +3549,6 @@ id uniform
 id unlabeled
 id up
 id url
-id urlpath
 id useLogo
 id vertical_only
 id view_offset_helper

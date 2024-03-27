@@ -9,10 +9,10 @@ import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkInfo;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.Telephony;
 import android.telephony.SmsManager;
+import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
@@ -23,20 +23,14 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import org.json.JSONObject;
-
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity implements MyMessageReceiver {
 
     private ArrayList<String> smsList = new ArrayList<>();
+    private ArrayList<String> jsonSMS = new ArrayList<>();
     private ListView listView;
 
-    private Boolean mynetworkstate = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,7 +42,6 @@ public class MainActivity extends AppCompatActivity implements MyMessageReceiver
         listView.setAdapter(adapter);
 
         checkPermissions();
-        mynetworkstate = networkState();
         MySmsReceiver.bindListener(this);
     }
 
@@ -56,46 +49,16 @@ public class MainActivity extends AppCompatActivity implements MyMessageReceiver
 
         //Getting URL path
         EditText urlElement = (EditText) findViewById(R.id.url);
-        EditText urlPathELement = (EditText) findViewById(R.id.urlpath);
 
-        String url = urlElement.getText().toString() + urlPathELement.getText().toString();
+        String url = urlElement.getText().toString();
 
-        //Creating JSON Object
-        ArrayList<String> my_Data = new ArrayList<String>();
-        my_Data.add(0, "Rafe Aaron");
-        my_Data.add(1, "256778673874");
-        my_Data.add(2, "150000");
-        my_Data.add(3, "2024-03-18 07:25:21");
-        my_Data.add(4, "23454323534");
+        if(networkState()){
+            SendDataToServer(url, jsonSMS);
+        }else{
+            Toast.makeText(this, "Please connect to wifi or turn on your mobile data", Toast.LENGTH_SHORT).show();
+        }
 
-        JSONObject preparedData = dataToSendToServer(my_Data);
 
-        Toast.makeText(this, "The data has been prepared", Toast.LENGTH_SHORT).show();
-
-        PostDataToServer post = new PostDataToServer(this, url);
-
-        Toast.makeText(this, "Post class created", Toast.LENGTH_SHORT).show();
-
-        post.doInBackground(preparedData.toString());
-    }
-
-    public void sendSMS(View view){
-
-        EditText number = (EditText) findViewById(R.id.url);
-        String Destination_Address = number.getText().toString();
-
-        EditText message = (EditText) findViewById(R.id.urlpath);
-        String Destination_message = message.getText().toString();
-
-        //Setting the service center address if needed
-        String scAddress = null;
-
-        //Set pending intent to broadcast
-        //When message is sent and when delivered
-        PendingIntent sentIntent = null, deliveryIntent = null;
-
-        SmsManager smsManager = SmsManager.getDefault();
-        smsManager.sendTextMessage(Destination_Address, scAddress,Destination_message,sentIntent,deliveryIntent);
     }
 
     public void checkPermissions(){
@@ -141,6 +104,7 @@ public class MainActivity extends AppCompatActivity implements MyMessageReceiver
                 null);
 
         if(cursor != null && cursor.moveToFirst()){
+
             do{
                 String address = cursor.getString(cursor.getColumnIndexOrThrow(Telephony.Sms.ADDRESS));
                 String body = cursor.getString(cursor.getColumnIndexOrThrow(Telephony.Sms.BODY));
@@ -151,9 +115,23 @@ public class MainActivity extends AppCompatActivity implements MyMessageReceiver
                             + "\nID: " + trimID(body)
                     );
                     //smsList.add(address);
+
+                    try {
+                        JSONObject mysms= new JSONObject();
+                        mysms.put("Number", trimNumber(body));
+                        mysms.put("Amount", trimAmount(body));
+                        mysms.put("ID", trimID(body));
+
+                        jsonSMS.add(mysms.toString());
+                    }
+                    catch(Exception ex){
+                        ex.printStackTrace();
+                    }
                 }
 
             }while(cursor.moveToNext());
+
+            Log.d("Messages", jsonSMS.toString());
 
             if(cursor != null){
                 cursor.close();
@@ -174,10 +152,6 @@ public class MainActivity extends AppCompatActivity implements MyMessageReceiver
             if(begin){
                 id += "" + message.charAt(i) + "";
             }
-
-            /*if(message.charAt(i + 1) == '.' && i == message.length() - 1 ){
-                break;
-            }*/
 
         }
 
@@ -292,92 +266,20 @@ public class MainActivity extends AppCompatActivity implements MyMessageReceiver
 
             if(networkInfo.getType() == ConnectivityManager.TYPE_WIFI){
                 isWifiConn |= networkInfo.isConnected();
-                Toast.makeText(this, "You are connected to a wifi network", Toast.LENGTH_SHORT).show();
             }
 
             if(networkInfo.getType() == ConnectivityManager.TYPE_MOBILE){
                 isMobileConn |= networkInfo.isConnected();
-                Toast.makeText(this, "You are connected to a mobile network", Toast.LENGTH_SHORT).show();
             }
         }
 
         return isWifiConn || isMobileConn;
     }
 
-    public JSONObject dataToSendToServer(ArrayList mydata) {
-        JSONObject jsonObject = new JSONObject();
+    public void SendDataToServer(String urlToPostTo, ArrayList<String> mydata){
 
-        try {
-            jsonObject.put("Name", mydata.get(0));
-            jsonObject.put("Number", mydata.get(1));
-            jsonObject.put("Amount", mydata.get(2));
-            jsonObject.put("Time Stamp", mydata.get(3));
-            jsonObject.put("ID", mydata.get(4));
-        }
-        catch(Exception e){
-            e.printStackTrace();
-        }
-
-        return jsonObject;
+        TalkToServer tts = new TalkToServer(urlToPostTo, this);
+        tts.execute(mydata);
     }
 
-}
-
-class PostDataToServer extends AsyncTask<String, Void, String>{
-
-    private Context myContext;
-    private String url;
-
-    public PostDataToServer(Context context, String urlToPostTo){
-        this.myContext = context;
-        this.url = urlToPostTo;
-    }
-
-    @Override
-    protected String doInBackground(String... strings) {
-        try {
-            //Creating Url to post the data
-            URL url = new URL(this.url);
-
-            //Create an HTTPUrlConnection
-            HttpURLConnection client = (HttpURLConnection) url.openConnection();
-            client.setRequestMethod("POST");
-
-            //Setting content type and accept type
-            client.setRequestProperty("Content-Type", "application/json");
-            client.setRequestProperty("Accept", "application/json");
-
-            //Set client to be able to output
-            client.setDoOutput(true);
-
-            //Creating an output stream and posting the data.
-
-            try (OutputStream os = client.getOutputStream()) {
-                byte[] input = strings[0].getBytes("utf-8");
-                os.write(input, 0, input.length);
-            }
-
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(client.getInputStream(), "utf-8"))) {
-                StringBuilder response = new StringBuilder();
-
-                //create a variable for the response
-                String responseLine = null;
-
-                //writing the response
-                while ((responseLine = br.readLine()) != null) {
-                    response.append(responseLine.trim());
-                }
-
-                //Displaying success message
-                Toast.makeText(this.myContext, "Data has been posted to the API", Toast.LENGTH_SHORT).show();
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            Toast.makeText(this.myContext, "Failed to push the data to the server: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-
-        }
-
-        return null;
-    }
 }
