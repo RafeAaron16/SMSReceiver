@@ -2,7 +2,7 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <string name="app_name">SMS Receiver</string>
+    <string name="app_name">SMS Server</string>
     <style name="Base.Theme.SMSReceiver" parent="Theme.Material3.DayNight.NoActionBar">
         
         

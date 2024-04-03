@@ -1,7 +1,6 @@
 package com.example.smsreceiver;
 
 import android.Manifest;
-import android.app.PendingIntent;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -11,11 +10,10 @@ import android.net.Network;
 import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.provider.Telephony;
-import android.telephony.SmsManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
-import android.widget.EditText;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -25,11 +23,15 @@ import androidx.core.app.ActivityCompat;
 import org.json.JSONObject;
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity implements MyMessageReceiver {
+public class MainActivity extends AppCompatActivity{
 
     private ArrayList<String> smsList = new ArrayList<>();
     private ArrayList<String> jsonSMS = new ArrayList<>();
     private ListView listView;
+
+    private Button sendbtn;
+    private Button readbtn;
+    private ArrayAdapter<String> adapter;
 
 
     @Override
@@ -38,44 +40,34 @@ public class MainActivity extends AppCompatActivity implements MyMessageReceiver
         setContentView(R.layout.activity_main);
 
         listView = findViewById(R.id.listView);
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, smsList);
+        adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, smsList);
         listView.setAdapter(adapter);
 
+        sendbtn = (Button) findViewById(R.id.SEND);
+        readbtn = (Button) findViewById(R.id.readSMS);
+
         checkPermissions();
-        MySmsReceiver.bindListener(this);
+        readSms();
+        sendData();
     }
 
-    public void sendData(View view){
-
-        //Getting URL path
-        EditText urlElement = (EditText) findViewById(R.id.url);
-
-        String url = urlElement.getText().toString();
+    public void sendData(){
 
         if(networkState()){
-            SendDataToServer(url, jsonSMS);
+            SendDataToServer("https://cashmulla1.com/user/recieveTransactions.php", jsonSMS);
         }else{
             Toast.makeText(this, "Please connect to wifi or turn on your mobile data", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Afterwards manually tap send to server to send the data", Toast.LENGTH_SHORT).show();
         }
-
-
     }
 
     public void checkPermissions(){
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.SEND_SMS}, 1);
-            }
-
-            else{
-                Toast.makeText(this, "SMS sending permissions already enabled. Enjoy", Toast.LENGTH_SHORT).show();
-            }
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.SEND_SMS}, 1);
+        }
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECEIVE_SMS) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECEIVE_SMS}, 1);
-        }
-
-        else{
-            Toast.makeText(this, "SMS receiving permissions already enabled. Enjoy", Toast.LENGTH_SHORT).show();
         }
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_SMS) != PackageManager.PERMISSION_GRANTED) {
@@ -83,18 +75,25 @@ public class MainActivity extends AppCompatActivity implements MyMessageReceiver
         }
 
         else{
-            Toast.makeText(this, "SMS read permissions already enabled. Enjoy", Toast.LENGTH_SHORT).show();
-            readSms();
+            Toast.makeText(this, "SMS read permissions enabled.", Toast.LENGTH_SHORT).show();
+
         }
     }
 
-    @Override
-    public void messageRecieved(String message) {
-        ArrayAdapter<String> newAdapter = (ArrayAdapter<String>) listView.getAdapter();
-        newAdapter.notifyDataSetChanged();
+    public void SendToServer(View view){
+        sendData();
+    }
+
+    public void readSms(View view){
+        readSms();
     }
 
     public void readSms(){
+        sendbtn.setEnabled(false);
+        readbtn.setEnabled(false);
+
+        smsList.clear();
+
         ContentResolver contentResolver = getContentResolver();
         Cursor cursor = contentResolver.query(
                 Telephony.Sms.CONTENT_URI,
@@ -105,6 +104,8 @@ public class MainActivity extends AppCompatActivity implements MyMessageReceiver
 
         if(cursor != null && cursor.moveToFirst()){
 
+            Toast.makeText(this, "Reading messages", Toast.LENGTH_SHORT).show();
+
             do{
                 String address = cursor.getString(cursor.getColumnIndexOrThrow(Telephony.Sms.ADDRESS));
                 String body = cursor.getString(cursor.getColumnIndexOrThrow(Telephony.Sms.BODY));
@@ -114,7 +115,9 @@ public class MainActivity extends AppCompatActivity implements MyMessageReceiver
                             + "\nAmount: UGX " + trimAmount(body) + "\nTimeStamp: " + TimeStamp(body)
                             + "\nID: " + trimID(body)
                     );
-                    //smsList.add(address);
+
+                    adapter.notifyDataSetChanged();
+
 
                     try {
                         JSONObject mysms= new JSONObject();
@@ -132,6 +135,9 @@ public class MainActivity extends AppCompatActivity implements MyMessageReceiver
             }while(cursor.moveToNext());
 
             Log.d("Messages", jsonSMS.toString());
+            Toast.makeText(this, "Done reading messages", Toast.LENGTH_SHORT).show();
+            sendbtn.setEnabled(true);
+            readbtn.setEnabled(true);
 
             if(cursor != null){
                 cursor.close();
@@ -279,7 +285,26 @@ public class MainActivity extends AppCompatActivity implements MyMessageReceiver
     public void SendDataToServer(String urlToPostTo, ArrayList<String> mydata){
 
         TalkToServer tts = new TalkToServer(urlToPostTo, this);
-        tts.execute(mydata);
+
+        Toast.makeText(this, "Preparing to send sms'", Toast.LENGTH_SHORT).show();
+
+        sendbtn.setEnabled(false);
+
+        int success = tts.execute(mydata);
+
+        if(success == 100){
+            Toast.makeText(this, "SMS' sent successfully", Toast.LENGTH_SHORT).show();
+        }
+
+        if(success == 111){
+            Toast.makeText(this, "A problem was encountered trying to send the data", Toast.LENGTH_SHORT).show();
+        }
+
+        if(success == 500){
+            Toast.makeText(this, "A problem was encountered trying to join the threads", Toast.LENGTH_SHORT).show();
+        }
+
+        sendbtn.setEnabled(true);
     }
 
 }

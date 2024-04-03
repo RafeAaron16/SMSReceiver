@@ -37,15 +37,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.SMSReceiver"
         android:usesCleartextTraffic="true" >
-        <receiver
-            android:name="com.example.smsreceiver.MySmsReceiver"
-            android:enabled="true"
-            android:exported="true" >
-            <intent-filter>
-                <action android:name="android.provider.Telephony.SMS_RECEIVED" />
-            </intent-filter>
-        </receiver>
-
         <activity
             android:name="com.example.smsreceiver.MainActivity"
             android:exported="true" >

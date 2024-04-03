@@ -3427,6 +3427,7 @@ id progress_circular
 id progress_horizontal
 id radio
 id ratio
+id readSMS
 id rectangles
 id report_drawn
 id reverseSawtooth
@@ -3548,7 +3549,6 @@ id unchecked
 id uniform
 id unlabeled
 id up
-id url
 id useLogo
 id vertical_only
 id view_offset_helper

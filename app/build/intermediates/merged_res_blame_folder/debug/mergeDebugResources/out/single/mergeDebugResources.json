@@ -1,11 +1,11 @@
 [
     {
-        "merged": "C:\\Users\\Rafe Aaron\\.gradle\\daemon\\8.4\\com.example.smsreceiver.app-debug-31:\\mipmap-mdpi_ic_launcher_round.webp.flat",
-        "source": "C:\\Users\\Rafe Aaron\\.gradle\\daemon\\8.4\\com.example.smsreceiver.app-main-33:\\mipmap-mdpi\\ic_launcher_round.webp"
-    },
-    {
         "merged": "C:\\Users\\Rafe Aaron\\.gradle\\daemon\\8.4\\com.example.smsreceiver.app-debug-31:\\mipmap-xxxhdpi_ic_launcher.webp.flat",
         "source": "C:\\Users\\Rafe Aaron\\.gradle\\daemon\\8.4\\com.example.smsreceiver.app-main-33:\\mipmap-xxxhdpi\\ic_launcher.webp"
+    },
+    {
+        "merged": "C:\\Users\\Rafe Aaron\\.gradle\\daemon\\8.4\\com.example.smsreceiver.app-debug-31:\\mipmap-mdpi_ic_launcher_round.webp.flat",
+        "source": "C:\\Users\\Rafe Aaron\\.gradle\\daemon\\8.4\\com.example.smsreceiver.app-main-33:\\mipmap-mdpi\\ic_launcher_round.webp"
     },
     {
         "merged": "C:\\Users\\Rafe Aaron\\.gradle\\daemon\\8.4\\com.example.smsreceiver.app-debug-31:\\xml_data_extraction_rules.xml.flat",
@@ -46,6 +46,10 @@
     {
         "merged": "C:\\Users\\Rafe Aaron\\.gradle\\daemon\\8.4\\com.example.smsreceiver.app-debug-31:\\mipmap-hdpi_ic_launcher_round.webp.flat",
         "source": "C:\\Users\\Rafe Aaron\\.gradle\\daemon\\8.4\\com.example.smsreceiver.app-main-33:\\mipmap-hdpi\\ic_launcher_round.webp"
+    },
+    {
+        "merged": "C:\\Users\\Rafe Aaron\\.gradle\\daemon\\8.4\\com.example.smsreceiver.app-debug-31:\\layout-land_activity_main.xml.flat",
+        "source": "C:\\Users\\Rafe Aaron\\.gradle\\daemon\\8.4\\com.example.smsreceiver.app-main-33:\\layout-land\\activity_main.xml"
     },
     {
         "merged": "C:\\Users\\Rafe Aaron\\.gradle\\daemon\\8.4\\com.example.smsreceiver.app-debug-31:\\mipmap-mdpi_ic_launcher.webp.flat",
